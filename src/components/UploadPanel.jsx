@@ -1,9 +1,10 @@
 import React from 'react';
-import { Archive, FileImage, FolderOpen, Images } from 'lucide-react';
+import { Archive, FileImage, FolderOpen, ImagePlus, Images } from 'lucide-react';
 import { copy } from '../lib/copy.js';
 import { formatBytes } from '../lib/fileUtils.js';
 
 export function UploadPanel({
+  imageInputRef,
   folderInputRef,
   archiveInputRef,
   sourceName,
@@ -11,6 +12,7 @@ export function UploadPanel({
   ignoredCount,
   totalSize,
   onDrop,
+  onImageChange,
   onFolderChange,
   onArchiveChange,
 }) {
@@ -30,6 +32,10 @@ export function UploadPanel({
         <strong>{copy.uploadTitle}</strong>
         <span>{copy.uploadHint}</span>
         <div className="button-row">
+          <button type="button" onClick={() => imageInputRef.current?.click()}>
+            <ImagePlus size={18} />
+            {copy.imagesButton}
+          </button>
           <button type="button" onClick={() => folderInputRef.current?.click()}>
             <FolderOpen size={18} />
             {copy.folderButton}
@@ -41,6 +47,14 @@ export function UploadPanel({
         </div>
       </div>
 
+      <input
+        ref={imageInputRef}
+        className="hidden-input"
+        type="file"
+        multiple
+        accept="image/*,.heic,.heif"
+        onChange={onImageChange}
+      />
       <input
         ref={folderInputRef}
         className="hidden-input"

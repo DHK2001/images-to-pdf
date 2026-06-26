@@ -14,6 +14,9 @@ export function CompositionPanel({
   gap,
   gridColumns,
   gridRows,
+  optimizeImages,
+  imageQuality,
+  maxImageDimension,
   onImagesPerPageChange,
   onLayoutModeChange,
   onPagePresetChange,
@@ -22,6 +25,9 @@ export function CompositionPanel({
   onGapChange,
   onGridColumnsChange,
   onGridRowsChange,
+  onOptimizeImagesChange,
+  onImageQualityChange,
+  onMaxImageDimensionChange,
 }) {
   return (
     <div className="compose-panel">
@@ -84,6 +90,42 @@ export function CompositionPanel({
           </label>
 
           <p className="field-help">{copy.composition.gridHint}</p>
+      </div>
+
+
+      <label className="field-label">{copy.composition.optimization}</label>
+      <div className="advanced-grid">
+        <label className="control-field checkbox-field">
+          <span>{copy.composition.optimizeImages}</span>
+          <input type="checkbox" checked={optimizeImages} onChange={(event) => onOptimizeImagesChange(event.target.checked)} />
+        </label>
+
+        <label className="control-field">
+          <span>{copy.composition.maxDimension}</span>
+          <select value={maxImageDimension} disabled={!optimizeImages} onChange={(event) => onMaxImageDimensionChange(Number(event.target.value))}>
+            <option value="0">{copy.composition.originalSize}</option>
+            {[1200, 1800, 2400, 3200].map((value) => (
+              <option value={value} key={value}>
+                {value}px
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="control-field">
+          <span>{copy.composition.quality(imageQuality)}</span>
+          <input
+            type="range"
+            min="0.55"
+            max="0.95"
+            step="0.05"
+            value={imageQuality}
+            disabled={!optimizeImages}
+            onChange={(event) => onImageQualityChange(Number(event.target.value))}
+          />
+        </label>
+
+        <p className="field-help">{copy.composition.optimizeHint}</p>
       </div>
 
       {layoutMode === 'paper' && (

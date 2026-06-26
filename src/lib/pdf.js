@@ -4,7 +4,14 @@ import { copy } from './copy.js';
 import { extensionOf } from './fileUtils.js';
 import { fitInto, gridForCount, groupPdfPages, pageDimensions, slotsForPage } from './layout.js';
 
-async function imageFileToBytes(file) {
+async function imageFileToBytes(file, options) {
+  if (options.optimizeImages) {
+    return {
+      bytes: await rasterizeToJpegBytes(file, options),
+      type: 'jpg',
+    };
+  }
+
   const bytes = new Uint8Array(await file.arrayBuffer());
   const ext = extensionOf(file.name);
 
@@ -18,19 +25,33 @@ async function imageFileToBytes(file) {
   };
 }
 
-async function embedImageFromFile(pdf, file) {
-  const { bytes, type } = await imageFileToBytes(file);
+async function embedImageFromFile(pdf, file, options) {
+  const { bytes, type } = await imageFileToBytes(file, options);
   const image = type === 'png' ? await pdf.embedPng(bytes) : await pdf.embedJpg(bytes);
   return { image, width: image.width, height: image.height };
 }
 
+async function rasterizeToJpegBytes(file, options) {
+  const bitmap = await bitmapFromFile(file);
+  const maxDimension = Number(options.maxImageDimension) || 0;
+  const scale = maxDimension > 0 ? Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height)) : 1;
+  const width = Math.max(1, Math.round(bitmap.width * scale));
+  const height = Math.max(1, Math.round(bitmap.height * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d');
+  context.fillStyle = '#ffffff';
+  context.fillRect(0, 0, width, height);
+  context.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close?.();
+
+  const blob = await canvasToBlob(canvas, 'image/jpeg', options.imageQuality);
+  return new Uint8Array(await blob.arrayBuffer());
+}
+
 async function rasterizeToPngBytes(file) {
-  let bitmap;
-  try {
-    bitmap = await createImageBitmap(file);
-  } catch {
-    throw new Error(copy.errors.convertImage(file.name));
-  }
+  const bitmap = await bitmapFromFile(file);
 
   const canvas = document.createElement('canvas');
   canvas.width = bitmap.width;
@@ -38,14 +59,26 @@ async function rasterizeToPngBytes(file) {
   canvas.getContext('2d').drawImage(bitmap, 0, 0);
   bitmap.close?.();
 
-  const blob = await new Promise((resolve, reject) => {
+  const blob = await canvasToBlob(canvas, 'image/png');
+
+  return new Uint8Array(await blob.arrayBuffer());
+}
+
+async function bitmapFromFile(file) {
+  try {
+    return await createImageBitmap(file);
+  } catch {
+    throw new Error(copy.errors.convertImage(file.name));
+  }
+}
+
+function canvasToBlob(canvas, type, quality) {
+  return new Promise((resolve, reject) => {
     canvas.toBlob((result) => {
       if (result) resolve(result);
       else reject(new Error(copy.errors.pngConvert));
-    }, 'image/png');
+    }, type, quality);
   });
-
-  return new Uint8Array(await blob.arrayBuffer());
 }
 
 export async function buildPdf(items, onProgress, options) {
@@ -54,7 +87,13 @@ export async function buildPdf(items, onProgress, options) {
 
   for (const [pageIndex, pageItems] of pages.entries()) {
     onProgress(copy.status.processingPage(pageIndex + 1, pages.length));
-    const embeddedImages = await Promise.all(pageItems.map((item) => embedImageFromFile(pdf, item.file)));
+    const embeddedImages = [];
+    for (const [imageIndex, item] of pageItems.entries()) {
+      if (options.optimizeImages) {
+        onProgress(copy.status.optimizingImage(pageIndex * options.imagesPerPage + imageIndex + 1, items.length));
+      }
+      embeddedImages.push(await embedImageFromFile(pdf, item.file, options));
+    }
 
     if (options.layoutMode === 'exact' && embeddedImages.length === 1) {
       const [{ image, width, height }] = embeddedImages;

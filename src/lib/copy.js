@@ -1,7 +1,8 @@
 export const copy = {
   appTitle: 'Images to PDF',
-  uploadTitle: 'Select an image folder, ZIP file, or RAR file',
+  uploadTitle: 'Select images, an image folder, a ZIP file, or a RAR file',
   uploadHint: 'You can also drag image files, ZIP files, or RAR files into this area.',
+  imagesButton: 'Images',
   folderButton: 'Folder',
   archiveButton: 'ZIP or RAR',
   summary: {
@@ -30,6 +31,20 @@ export const copy = {
     landscape: 'Landscape',
     margin: (value) => `Margin: ${value}px`,
     gap: (value) => `Spacing: ${value}px`,
+    optimization: 'File size',
+    optimizeImages: 'Optimize PDF size',
+    optimizeHint: 'Recommended for large folders. Images are resized and compressed before they are added to the PDF.',
+    quality: (value) => `Image quality: ${Math.round(value * 100)}%`,
+    maxDimension: 'Max image size',
+    originalSize: 'Original size',
+  },
+  output: {
+    fileName: 'PDF file name',
+    placeholder: 'images',
+  },
+  loading: {
+    title: 'Working on your PDF',
+    message: 'Please wait until the current process finishes.',
   },
   actions: {
     generate: 'Generate PDF',
@@ -56,17 +71,20 @@ export const copy = {
     message: (name) => `${name} is ready to preview or download.`,
   },
   status: {
+    readingImages: 'Reading image files',
+    readingFolder: 'Reading image folder',
     readingArchive: 'Reading archive file',
     loaded: (count, ignoredText = '') => `${count} images loaded${ignoredText}`,
     loadedArchive: (count, ignoredText = '') => `${count} images loaded from archive${ignoredText}`,
     ignoredFiles: (count) => ` (${count} files ignored)`,
     processingPage: (page, total) => `Processing page ${page} of ${total}`,
+    optimizingImage: (current, total) => `Optimizing image ${current} of ${total}`,
     finishing: 'Finalizing PDF',
     ready: (count) => `PDF ready: ${count} pages`,
   },
   errors: {
     noImages: (formats) => `No compatible images were found. Supported formats: ${formats}.`,
-    noSelection: 'Select an image folder, image files, a ZIP file, or a RAR file first.',
+    noSelection: 'Select image files, an image folder, a ZIP file, or a RAR file first.',
     archiveRead: 'The archive file could not be read.',
     convertImage: (name) => `The browser could not read "${name}". Convert that image to JPG or PNG and try again.`,
     pngConvert: 'The image could not be converted to PNG.',

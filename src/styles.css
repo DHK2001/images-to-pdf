@@ -281,9 +281,26 @@ h2 {
 }
 
 .control-field select,
-.control-field input[type="range"] {
+.control-field input[type="range"],
+.control-field input[type="text"] {
   min-width: 0;
   width: 100%;
+}
+
+.checkbox-field {
+  align-content: start;
+}
+
+.checkbox-field input {
+  accent-color: #1f6f78;
+  height: 22px;
+  margin: 7px 0 0;
+  width: 22px;
+}
+
+.control-field :disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .field-help {
@@ -294,7 +311,8 @@ h2 {
   margin: 0;
 }
 
-.control-field select {
+.control-field select,
+.control-field input[type="text"] {
   background: #ffffff;
   border: 1px solid #ccd6dd;
   border-radius: 8px;
@@ -302,6 +320,10 @@ h2 {
   font: inherit;
   min-height: 38px;
   padding: 0 10px;
+}
+
+.output-name-field {
+  margin-top: 2px;
 }
 
 .actions {
@@ -326,6 +348,37 @@ h2 {
   display: flex;
   gap: 8px;
   padding: 10px 12px;
+}
+
+.busy-backdrop {
+  align-items: center;
+  background: rgba(23, 32, 38, 0.48);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 20px;
+  position: fixed;
+  z-index: 30;
+}
+
+.busy-card {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #d7e0e6;
+  border-radius: 8px;
+  box-shadow: 0 24px 70px rgba(23, 32, 38, 0.24);
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  max-width: 360px;
+  padding: 24px;
+  text-align: center;
+  width: min(100%, 360px);
+}
+
+.busy-card span {
+  color: #61717c;
+  line-height: 1.4;
 }
 
 .modal-backdrop {

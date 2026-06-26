@@ -17,4 +17,7 @@ export const DEFAULT_OPTIONS = {
   gap: 18,
   gridColumns: 0,
   gridRows: 0,
+  optimizeImages: true,
+  imageQuality: 0.82,
+  maxImageDimension: 1800,
 };

@@ -8,12 +8,27 @@ export function groupPdfPages(items, imagesPerPage) {
   return pages;
 }
 
-export function gridForCount(count) {
+export function gridForCount(count, grid = {}) {
+  if (grid.cols || grid.rows) {
+    const cols = grid.cols || Math.ceil(count / grid.rows);
+    const rows = grid.rows || Math.ceil(count / cols);
+    return ensureGridCapacity(count, cols, rows, Boolean(grid.cols));
+  }
+
   if (count <= 1) return { cols: 1, rows: 1 };
   if (count === 2) return { cols: 1, rows: 2 };
   if (count === 3 || count === 4) return { cols: 2, rows: 2 };
   const cols = Math.ceil(Math.sqrt(count));
   return { cols, rows: Math.ceil(count / cols) };
+}
+
+function ensureGridCapacity(count, cols, rows, expandRowsFirst) {
+  const safeCols = Math.max(1, cols);
+  const safeRows = Math.max(1, rows);
+  if (safeCols * safeRows >= count) return { cols: safeCols, rows: safeRows };
+  return expandRowsFirst
+    ? { cols: safeCols, rows: Math.ceil(count / safeCols) }
+    : { cols: Math.ceil(count / safeRows), rows: safeRows };
 }
 
 export function pageDimensions(pagePreset, orientation) {
@@ -35,8 +50,8 @@ export function fitInto(image, slot) {
   };
 }
 
-export function slotsForPage(count, pageWidth, pageHeight, margin = 0, gap = 0) {
-  const { cols, rows } = gridForCount(count);
+export function slotsForPage(count, pageWidth, pageHeight, margin = 0, gap = 0, grid = {}) {
+  const { cols, rows } = gridForCount(count, grid);
   const contentWidth = Math.max(1, pageWidth - margin * 2 - gap * (cols - 1));
   const contentHeight = Math.max(1, pageHeight - margin * 2 - gap * (rows - 1));
   const cellWidth = contentWidth / cols;
@@ -54,15 +69,15 @@ export function slotsForPage(count, pageWidth, pageHeight, margin = 0, gap = 0) 
   });
 }
 
-export function previewSizeForExact(items) {
-  const { cols, rows } = gridForCount(items.length);
+export function previewSizeForExact(items, grid = {}) {
+  const { cols, rows } = gridForCount(items.length, grid);
   const cellWidth = Math.max(...items.map((item) => item.width || 1));
   const cellHeight = Math.max(...items.map((item) => item.height || 1));
   return { width: cols * cellWidth, height: rows * cellHeight };
 }
 
-export function slotsForPreview(count, pageWidth, pageHeight, margin, gap) {
-  const slots = slotsForPage(count, pageWidth, pageHeight, margin, gap);
+export function slotsForPreview(count, pageWidth, pageHeight, margin, gap, grid = {}) {
+  const slots = slotsForPage(count, pageWidth, pageHeight, margin, gap, grid);
   return slots.map((slot) => ({
     x: (slot.x / pageWidth) * 100,
     y: ((pageHeight - slot.y - slot.height) / pageHeight) * 100,

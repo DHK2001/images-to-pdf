@@ -64,13 +64,13 @@ export async function buildPdf(items, onProgress, options) {
     }
 
     if (options.layoutMode === 'exact') {
-      const { cols, rows } = gridForCount(embeddedImages.length);
+      const { cols, rows } = gridForCount(embeddedImages.length, options.imageGrid);
       const cellWidth = Math.max(...embeddedImages.map((entry) => entry.width));
       const cellHeight = Math.max(...embeddedImages.map((entry) => entry.height));
       const pageWidth = cellWidth * cols;
       const pageHeight = cellHeight * rows;
       const page = pdf.addPage([pageWidth, pageHeight]);
-      const slots = slotsForPage(embeddedImages.length, pageWidth, pageHeight);
+      const slots = slotsForPage(embeddedImages.length, pageWidth, pageHeight, 0, 0, options.imageGrid);
 
       embeddedImages.forEach((entry, index) => {
         page.drawImage(entry.image, fitInto(entry, slots[index]));
@@ -80,7 +80,7 @@ export async function buildPdf(items, onProgress, options) {
 
     const paper = pageDimensions(options.pagePreset, options.orientation);
     const page = pdf.addPage([paper.width, paper.height]);
-    const slots = slotsForPage(embeddedImages.length, paper.width, paper.height, options.margin, options.gap);
+    const slots = slotsForPage(embeddedImages.length, paper.width, paper.height, options.margin, options.gap, options.imageGrid);
 
     embeddedImages.forEach((entry, index) => {
       page.drawImage(entry.image, fitInto(entry, slots[index]));

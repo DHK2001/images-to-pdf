@@ -12,12 +12,16 @@ export function CompositionPanel({
   orientation,
   margin,
   gap,
+  gridColumns,
+  gridRows,
   onImagesPerPageChange,
   onLayoutModeChange,
   onPagePresetChange,
   onOrientationChange,
   onMarginChange,
   onGapChange,
+  onGridColumnsChange,
+  onGridRowsChange,
 }) {
   return (
     <div className="compose-panel">
@@ -51,6 +55,35 @@ export function CompositionPanel({
             {count}
           </button>
         ))}
+      </div>
+
+      <label className="field-label">{copy.composition.exactGrid}</label>
+      <div className="advanced-grid">
+          <label className="control-field">
+            <span>{copy.composition.columns}</span>
+            <select value={gridColumns} onChange={(event) => onGridColumnsChange(Number(event.target.value))}>
+              <option value="0">{copy.composition.auto}</option>
+              {Array.from({ length: 10 }, (_, index) => index + 1).map((count) => (
+                <option value={count} key={count}>
+                  {count}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="control-field">
+            <span>{copy.composition.rows}</span>
+            <select value={gridRows} onChange={(event) => onGridRowsChange(Number(event.target.value))}>
+              <option value="0">{copy.composition.auto}</option>
+              {Array.from({ length: 10 }, (_, index) => index + 1).map((count) => (
+                <option value={count} key={count}>
+                  {count}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <p className="field-help">{copy.composition.gridHint}</p>
       </div>
 
       {layoutMode === 'paper' && (

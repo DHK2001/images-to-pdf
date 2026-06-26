@@ -1,5 +1,9 @@
 import JSZip from 'jszip';
+import { createExtractorFromData } from 'node-unrar-js/esm/index.esm.js';
+import unrarWasmUrl from 'node-unrar-js/esm/js/unrar.wasm?url';
 import { IMAGE_EXTENSIONS } from './constants.js';
+
+let unrarWasmBinaryPromise;
 
 export function naturalCompare(a, b) {
   return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
@@ -12,6 +16,10 @@ export function extensionOf(name) {
 
 export function isSupportedImage(name) {
   return IMAGE_EXTENSIONS.includes(extensionOf(name));
+}
+
+export function isSupportedArchive(name) {
+  return ['.zip', '.rar'].includes(extensionOf(name));
 }
 
 export function fileBaseName(name) {
@@ -81,6 +89,13 @@ export function mimeTypeFromName(name) {
   return 'application/octet-stream';
 }
 
+export async function filesFromArchive(file) {
+  const extension = extensionOf(file.name);
+  if (extension === '.zip') return filesFromZip(file);
+  if (extension === '.rar') return filesFromRar(file);
+  throw new Error('Unsupported archive file.');
+}
+
 export async function filesFromZip(file) {
   const zip = await JSZip.loadAsync(file);
   const fileEntries = Object.values(zip.files).filter(
@@ -106,6 +121,66 @@ export async function filesFromZip(file) {
     images,
     ignored: fileEntries.length - images.length,
   };
+}
+
+async function filesFromRar(file) {
+  const extractor = await createExtractorFromData({
+    data: await file.arrayBuffer(),
+    wasmBinary: await getUnrarWasmBinary(),
+  });
+
+  const list = extractor.getFileList();
+  const fileHeaders = [...list.fileHeaders].filter((header) => {
+    const name = normalizeArchivePath(header.name);
+    return !header.flags.directory && !name.startsWith('__MACOSX/') && !name.endsWith('.DS_Store');
+  });
+  const imageHeaders = fileHeaders
+    .filter((header) => isSupportedImage(header.name))
+    .sort((a, b) => naturalCompare(a.name, b.name));
+
+  if (!imageHeaders.length) {
+    return {
+      sourceName: fileBaseName(file.name),
+      images: [],
+      ignored: fileHeaders.length,
+    };
+  }
+
+  const extracted = extractor.extract({ files: imageHeaders.map((header) => header.name) });
+  const extractedFiles = [...extracted.files].filter((entry) => entry.extraction);
+  const images = await Promise.all(
+    extractedFiles.map((entry) => {
+      const archivePath = normalizeArchivePath(entry.fileHeader.name);
+      const blob = new Blob([entry.extraction], { type: mimeTypeFromName(archivePath) });
+      const rarFile = new File([blob], archivePath.split('/').pop(), {
+        type: blob.type,
+        lastModified: file.lastModified,
+      });
+      return imageItemFromFile(rarFile, archivePath);
+    }),
+  );
+
+  images.sort((a, b) => naturalCompare(a.displayPath, b.displayPath));
+
+  return {
+    sourceName: fileBaseName(file.name),
+    images,
+    ignored: fileHeaders.length - images.length,
+  };
+}
+
+async function getUnrarWasmBinary() {
+  if (!unrarWasmBinaryPromise) {
+    unrarWasmBinaryPromise = fetch(unrarWasmUrl).then((response) => {
+      if (!response.ok) throw new Error('The RAR reader could not be loaded.');
+      return response.arrayBuffer();
+    });
+  }
+  return unrarWasmBinaryPromise;
+}
+
+function normalizeArchivePath(path) {
+  return path.replaceAll('\\', '/');
 }
 
 export function formatBytes(bytes) {

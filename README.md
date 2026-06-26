@@ -1,10 +1,10 @@
 # Images to PDF
 
-A React web app for converting image folders or ZIP files into a PDF. Images can be grouped into pages, previewed before generation, reordered by page, and exported as a downloadable PDF.
+A React web app for converting image folders, ZIP files, or RAR files into a PDF. Images can be grouped into pages, previewed before generation, reordered by page, and exported as a downloadable PDF.
 
 ## Features
 
-- Upload an image folder, individual images, or a ZIP file.
+- Upload an image folder, individual images, a ZIP file, or a RAR file.
 - Generate a PDF in the browser.
 - Choose 1 to 10 images per PDF page.
 - Use either:

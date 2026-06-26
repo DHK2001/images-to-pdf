@@ -1,10 +1,10 @@
 import React from 'react';
 import { previewSizeForExact, slotsForPreview } from '../lib/layout.js';
 
-export function PagePreview({ items, layoutMode, pageSize, margin, gap, isLarge = false }) {
+export function PagePreview({ items, layoutMode, pageSize, margin, gap, imageGrid, isLarge = false }) {
   const isPaper = layoutMode === 'paper';
-  const previewPage = isPaper ? pageSize : previewSizeForExact(items);
-  const slots = slotsForPreview(items.length, previewPage.width, previewPage.height, margin, gap);
+  const previewPage = isPaper ? pageSize : previewSizeForExact(items, imageGrid);
+  const slots = slotsForPreview(items.length, previewPage.width, previewPage.height, margin, gap, imageGrid);
   const largeWidth = previewPage.width >= previewPage.height ? 820 : 560;
   const pageRatio = previewPage.width / previewPage.height;
 

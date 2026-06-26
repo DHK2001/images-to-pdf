@@ -3,7 +3,7 @@ import { FileText, GripVertical } from 'lucide-react';
 import { copy } from '../lib/copy.js';
 import { PagePreview } from './PagePreview.jsx';
 
-export function SelectedPagePanel({ activePageIndex, activePageItems, layoutMode, pageSize, margin, gap }) {
+export function SelectedPagePanel({ activePageIndex, activePageItems, layoutMode, pageSize, margin, gap, imageGrid }) {
   return (
     <section className="panel focus-panel">
       <div className="panel-header">
@@ -15,7 +15,7 @@ export function SelectedPagePanel({ activePageIndex, activePageItems, layoutMode
 
       {activePageItems.length ? (
         <div className="focus-preview-wrap">
-          <PagePreview isLarge items={activePageItems} layoutMode={layoutMode} pageSize={pageSize} margin={margin} gap={gap} />
+          <PagePreview isLarge items={activePageItems} layoutMode={layoutMode} pageSize={pageSize} margin={margin} gap={gap} imageGrid={imageGrid} />
         </div>
       ) : (
         <EmptyPreview text={copy.selectedPage.placeholder} />
@@ -31,6 +31,7 @@ export function PageListPreview({
   pageSize,
   margin,
   gap,
+  imageGrid,
   onSelectPage,
   onDragStart,
   onDropPage,
@@ -68,7 +69,7 @@ export function PageListPreview({
                 <GripVertical size={14} />
                 {copy.preview.pageLabel(pageIndex + 1)}
               </span>
-              <PagePreview items={pageItems} layoutMode={layoutMode} pageSize={pageSize} margin={margin} gap={gap} />
+              <PagePreview items={pageItems} layoutMode={layoutMode} pageSize={pageSize} margin={margin} gap={gap} imageGrid={imageGrid} />
             </button>
           ))
         )}

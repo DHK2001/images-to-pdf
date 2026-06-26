@@ -15,4 +15,6 @@ export const DEFAULT_OPTIONS = {
   orientation: 'portrait',
   margin: 36,
   gap: 18,
+  gridColumns: 0,
+  gridRows: 0,
 };

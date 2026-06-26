@@ -8,9 +8,9 @@ import { DEFAULT_OPTIONS, SUPPORTED_LABEL } from './lib/constants.js';
 import { copy } from './lib/copy.js';
 import {
   cleanPdfName,
-  extensionOf,
   fileBaseName,
-  filesFromZip,
+  filesFromArchive,
+  isSupportedArchive,
   folderNameFromItems,
   revokeImageItems,
   splitImageItems,
@@ -20,7 +20,7 @@ import { buildPdf } from './lib/pdf.js';
 
 export function App() {
   const folderInputRef = useRef(null);
-  const zipInputRef = useRef(null);
+  const archiveInputRef = useRef(null);
   const [images, setImages] = useState([]);
   const [ignoredCount, setIgnoredCount] = useState(0);
   const [sourceName, setSourceName] = useState('');
@@ -37,6 +37,8 @@ export function App() {
   const [orientation, setOrientation] = useState(DEFAULT_OPTIONS.orientation);
   const [margin, setMargin] = useState(DEFAULT_OPTIONS.margin);
   const [gap, setGap] = useState(DEFAULT_OPTIONS.gap);
+  const [gridColumns, setGridColumns] = useState(DEFAULT_OPTIONS.gridColumns);
+  const [gridRows, setGridRows] = useState(DEFAULT_OPTIONS.gridRows);
   const [selectedPageIndex, setSelectedPageIndex] = useState(0);
 
   const totalSize = useMemo(() => images.reduce((sum, item) => sum + item.file.size, 0), [images]);
@@ -46,6 +48,7 @@ export function App() {
   const previewPaper = pageDimensions(pagePreset, orientation);
   const pageMargin = layoutMode === 'paper' ? margin : 0;
   const pageGap = layoutMode === 'paper' ? gap : 0;
+  const imageGrid = { cols: gridColumns, rows: gridRows };
 
   function revokePdf() {
     if (pdfUrl) URL.revokeObjectURL(pdfUrl);
@@ -79,20 +82,20 @@ export function App() {
     event.target.value = '';
   }
 
-  async function handleZipChange(event) {
+  async function handleArchiveChange(event) {
     const [file] = event.target.files;
     event.target.value = '';
     if (!file) return;
 
     setIsBusy(true);
     setError('');
-    setStatus(copy.status.readingZip);
+    setStatus(copy.status.readingArchive);
     try {
-      const result = await filesFromZip(file);
+      const result = await filesFromArchive(file);
       const ignoredText = result.ignored ? copy.status.ignoredFiles(result.ignored) : '';
-      applyImages(result.images, result.ignored, result.sourceName, copy.status.loadedZip(result.images.length, ignoredText));
-    } catch (zipError) {
-      setError(zipError.message || copy.errors.zipRead);
+      applyImages(result.images, result.ignored, result.sourceName, copy.status.loadedArchive(result.images.length, ignoredText));
+    } catch (archiveError) {
+      setError(archiveError.message || copy.errors.archiveRead);
       setStatus('');
     } finally {
       setIsBusy(false);
@@ -102,17 +105,17 @@ export function App() {
   async function handleDrop(event) {
     event.preventDefault();
     const files = Array.from(event.dataTransfer.files);
-    const zip = files.find((file) => extensionOf(file.name) === '.zip');
-    if (zip) {
+    const archive = files.find((file) => isSupportedArchive(file.name));
+    if (archive) {
       setIsBusy(true);
       setError('');
-      setStatus(copy.status.readingZip);
+      setStatus(copy.status.readingArchive);
       try {
-        const result = await filesFromZip(zip);
+        const result = await filesFromArchive(archive);
         const ignoredText = result.ignored ? copy.status.ignoredFiles(result.ignored) : '';
-        applyImages(result.images, result.ignored, result.sourceName, copy.status.loadedZip(result.images.length, ignoredText));
-      } catch (zipError) {
-        setError(zipError.message || copy.errors.zipRead);
+        applyImages(result.images, result.ignored, result.sourceName, copy.status.loadedArchive(result.images.length, ignoredText));
+      } catch (archiveError) {
+        setError(archiveError.message || copy.errors.archiveRead);
         setStatus('');
       } finally {
         setIsBusy(false);
@@ -142,6 +145,7 @@ export function App() {
         orientation,
         margin: pageMargin,
         gap: pageGap,
+        imageGrid,
       });
       const blob = new Blob([bytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
@@ -185,14 +189,14 @@ export function App() {
         <div className="panel upload-panel">
           <UploadPanel
             folderInputRef={folderInputRef}
-            zipInputRef={zipInputRef}
+            archiveInputRef={archiveInputRef}
             sourceName={sourceName}
             imageCount={images.length}
             ignoredCount={ignoredCount}
             totalSize={totalSize}
             onDrop={handleDrop}
             onFolderChange={handleFolderChange}
-            onZipChange={handleZipChange}
+            onArchiveChange={handleArchiveChange}
           />
 
           <CompositionPanel
@@ -204,6 +208,8 @@ export function App() {
             orientation={orientation}
             margin={margin}
             gap={gap}
+            gridColumns={gridColumns}
+            gridRows={gridRows}
             onImagesPerPageChange={(count) => {
               setImagesPerPage(count);
               setSelectedPageIndex(0);
@@ -213,6 +219,8 @@ export function App() {
             onOrientationChange={setOrientation}
             onMarginChange={setMargin}
             onGapChange={setGap}
+            onGridColumnsChange={setGridColumns}
+            onGridRowsChange={setGridRows}
           />
 
           <div className="actions">
@@ -255,6 +263,7 @@ export function App() {
         pageSize={previewPaper}
         margin={pageMargin}
         gap={pageGap}
+        imageGrid={imageGrid}
       />
 
       <PageListPreview
@@ -264,6 +273,7 @@ export function App() {
         pageSize={previewPaper}
         margin={pageMargin}
         gap={pageGap}
+        imageGrid={imageGrid}
         onSelectPage={setSelectedPageIndex}
         onDragStart={setDragPageIndex}
         onDropPage={(pageIndex) => movePage(dragPageIndex, pageIndex)}

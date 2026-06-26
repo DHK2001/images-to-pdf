@@ -5,14 +5,14 @@ import { formatBytes } from '../lib/fileUtils.js';
 
 export function UploadPanel({
   folderInputRef,
-  zipInputRef,
+  archiveInputRef,
   sourceName,
   imageCount,
   ignoredCount,
   totalSize,
   onDrop,
   onFolderChange,
-  onZipChange,
+  onArchiveChange,
 }) {
   return (
     <>
@@ -34,9 +34,9 @@ export function UploadPanel({
             <FolderOpen size={18} />
             {copy.folderButton}
           </button>
-          <button type="button" onClick={() => zipInputRef.current?.click()}>
+          <button type="button" onClick={() => archiveInputRef.current?.click()}>
             <Archive size={18} />
-            {copy.zipButton}
+            {copy.archiveButton}
           </button>
         </div>
       </div>
@@ -50,7 +50,7 @@ export function UploadPanel({
         directory="true"
         onChange={onFolderChange}
       />
-      <input ref={zipInputRef} className="hidden-input" type="file" accept=".zip,application/zip" onChange={onZipChange} />
+      <input ref={archiveInputRef} className="hidden-input" type="file" accept=".zip,.rar,application/zip,application/vnd.rar,application/x-rar-compressed" onChange={onArchiveChange} />
 
       <div className="summary">
         <SummaryItem label={copy.summary.source} value={sourceName || copy.summary.emptySource} />

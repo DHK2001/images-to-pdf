@@ -4,6 +4,7 @@ import { BusyOverlay } from './components/BusyOverlay.jsx';
 import { CompositionPanel } from './components/CompositionPanel.jsx';
 import { PageListPreview, SelectedPagePanel } from './components/PreviewPanels.jsx';
 import { SuccessModal } from './components/SuccessModal.jsx';
+import { SummaryPanel } from './components/SummaryPanel.jsx';
 import { UploadPanel } from './components/UploadPanel.jsx';
 import { DEFAULT_OPTIONS, SUPPORTED_LABEL } from './lib/constants.js';
 import { copy } from './lib/copy.js';
@@ -230,23 +231,28 @@ export function App() {
   }
 
   return (
-    <main className="app-shell">
-      <section className="workspace">
-        <div className="panel upload-panel">
-          <UploadPanel
-            imageInputRef={imageInputRef}
-            folderInputRef={folderInputRef}
-            archiveInputRef={archiveInputRef}
-            sourceName={sourceName}
-            imageCount={images.length}
-            ignoredCount={ignoredCount}
-            totalSize={totalSize}
-            onDrop={handleDrop}
-            onImageChange={handleImageChange}
-            onFolderChange={handleFolderChange}
-            onArchiveChange={handleArchiveChange}
-          />
+    <>
+      <nav className="top-nav">
+        <div className="brand-name">{copy.appTitle}</div>
+      </nav>
 
+      <main className="app-shell">
+        <header className="hero-section animate-in">
+          <h1>{copy.hero.title}</h1>
+          <p>{copy.hero.subtitle}</p>
+        </header>
+
+        <UploadPanel
+          imageInputRef={imageInputRef}
+          folderInputRef={folderInputRef}
+          archiveInputRef={archiveInputRef}
+          onDrop={handleDrop}
+          onImageChange={handleImageChange}
+          onFolderChange={handleFolderChange}
+          onArchiveChange={handleArchiveChange}
+        />
+
+        <section className="config-grid animate-in">
           <CompositionPanel
             pageCount={pagePlan.length}
             hasImages={images.length > 0}
@@ -277,75 +283,78 @@ export function App() {
             onMaxImageDimensionChange={setMaxImageDimension}
           />
 
-          <label className="control-field output-name-field">
-            <span>{copy.output.fileName}</span>
-            <input
-              type="text"
-              value={outputName}
-              placeholder={copy.output.placeholder}
-              onChange={(event) => {
-                revokePdf();
-                setOutputName(event.target.value);
-              }}
-            />
-          </label>
+          <SummaryPanel
+            sourceName={sourceName}
+            imageCount={images.length}
+            ignoredCount={ignoredCount}
+            totalSize={totalSize}
+            outputName={outputName}
+            onOutputNameChange={(value) => {
+              revokePdf();
+              setOutputName(value);
+            }}
+            pdfUrl={pdfUrl}
+            pdfFileName={pdfFileName}
+          />
+        </section>
 
-          <div className="actions">
-            <button type="button" className="primary" onClick={handleGeneratePdf} disabled={isBusy || images.length === 0 || pagePlan.length === 0}>
-              {isBusy ? <Loader2 className="spin" size={18} /> : <FileText size={18} />}
-              {copy.actions.generate}
-            </button>
-            <button type="button" onClick={clearAll} disabled={isBusy && !images.length}>
-              <RefreshCw size={18} />
-              {copy.actions.clear}
-            </button>
-            {pdfUrl && (
-              <>
-                <a href={pdfUrl} target="_blank">
-                  <Eye size={18} />
-                  {copy.actions.preview(pdfFileName)}
-                </a>
-                <a href={pdfUrl} download={pdfFileName}>
-                  <Download size={18} />
-                  {copy.actions.download}
-                </a>
-              </>
+        <section className="preview-layout animate-in">
+          <SelectedPagePanel
+            activePageIndex={activePageIndex}
+            activePageItems={activePageItems}
+            layoutMode={layoutMode}
+            pageSize={previewPaper}
+            margin={pageMargin}
+            gap={pageGap}
+            imageGrid={imageGrid}
+            pageCount={pagePlan.length}
+          />
+
+          <PageListPreview
+            pagePlan={pagePlan}
+            activePageIndex={activePageIndex}
+            layoutMode={layoutMode}
+            pageSize={previewPaper}
+            margin={pageMargin}
+            gap={pageGap}
+            imageGrid={imageGrid}
+            onSelectPage={setSelectedPageIndex}
+            onDragStart={setDragPageIndex}
+            onDropPage={(pageIndex) => movePage(dragPageIndex, pageIndex)}
+            onDragEnd={() => setDragPageIndex(null)}
+          />
+        </section>
+
+        {(status || error) && (
+          <section className="message-strip">
+            {status && <p className="status">{status}</p>}
+            {error && (
+              <p className="error">
+                <X size={16} />
+                {error}
+              </p>
             )}
-          </div>
+          </section>
+        )}
+      </main>
 
-          {status && <p className="status">{status}</p>}
-          {error && (
-            <p className="error">
-              <X size={16} />
-              {error}
-            </p>
-          )}
+      <div className="floating-action-bar">
+        <div className="glass-card action-pill">
+          <button type="button" onClick={clearAll} disabled={isBusy && !images.length}>
+            <RefreshCw size={18} />
+            {copy.actions.clear}
+          </button>
+          <button type="button" className="primary" onClick={handleGeneratePdf} disabled={isBusy || images.length === 0 || pagePlan.length === 0}>
+            {isBusy ? <Loader2 className="spin" size={18} /> : <FileText size={18} />}
+            {copy.actions.generate}
+          </button>
         </div>
-      </section>
+      </div>
 
-      <SelectedPagePanel
-        activePageIndex={activePageIndex}
-        activePageItems={activePageItems}
-        layoutMode={layoutMode}
-        pageSize={previewPaper}
-        margin={pageMargin}
-        gap={pageGap}
-        imageGrid={imageGrid}
-      />
-
-      <PageListPreview
-        pagePlan={pagePlan}
-        activePageIndex={activePageIndex}
-        layoutMode={layoutMode}
-        pageSize={previewPaper}
-        margin={pageMargin}
-        gap={pageGap}
-        imageGrid={imageGrid}
-        onSelectPage={setSelectedPageIndex}
-        onDragStart={setDragPageIndex}
-        onDropPage={(pageIndex) => movePage(dragPageIndex, pageIndex)}
-        onDragEnd={() => setDragPageIndex(null)}
-      />
+      <footer className="app-footer">
+        <strong>{copy.appTitle}</strong>
+        <span>{copy.footer}</span>
+      </footer>
 
       <BusyOverlay isOpen={isBusy} message={status} />
 
@@ -355,6 +364,6 @@ export function App() {
         pdfFileName={pdfFileName}
         onClose={() => setShowSuccessModal(false)}
       />
-    </main>
+    </>
   );
 }

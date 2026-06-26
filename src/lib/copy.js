@@ -1,7 +1,12 @@
 export const copy = {
-  appTitle: 'Images to PDF',
-  uploadTitle: 'Select images, an image folder, a ZIP file, or a RAR file',
-  uploadHint: 'You can also drag image files, ZIP files, or RAR files into this area.',
+  appTitle: 'Pix2PDF',
+  hero: {
+    title: 'Transform your images into professional PDFs.',
+    subtitle: 'A high-fidelity local converter for images, folders, ZIP files, and RAR archives.',
+  },
+  footer: 'Local image-to-PDF conversion for creators and professionals.',
+  uploadTitle: 'Drop your images here',
+  uploadHint: 'Support for images, folders, ZIP files, and RAR archives.',
   imagesButton: 'Images',
   folderButton: 'Folder',
   archiveButton: 'ZIP or RAR',

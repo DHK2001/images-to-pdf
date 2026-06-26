@@ -3,7 +3,7 @@ import { FileText, GripVertical } from 'lucide-react';
 import { copy } from '../lib/copy.js';
 import { PagePreview } from './PagePreview.jsx';
 
-export function SelectedPagePanel({ activePageIndex, activePageItems, layoutMode, pageSize, margin, gap, imageGrid }) {
+export function SelectedPagePanel({ activePageIndex, activePageItems, layoutMode, pageSize, margin, gap, imageGrid, pageCount }) {
   return (
     <section className="panel focus-panel">
       <div className="panel-header">
@@ -11,6 +11,7 @@ export function SelectedPagePanel({ activePageIndex, activePageItems, layoutMode
           <h2>{copy.selectedPage.title}</h2>
           <p>{activePageItems.length ? copy.selectedPage.loaded(activePageIndex + 1) : copy.selectedPage.empty}</p>
         </div>
+        {pageCount > 0 && <span className="page-count-pill">Page {activePageIndex + 1} of {pageCount}</span>}
       </div>
 
       {activePageItems.length ? (

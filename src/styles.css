@@ -737,3 +737,261 @@ p {
     width: 100%;
   }
 }
+
+@media (max-width: 760px) {
+  button,
+  a {
+    min-height: 46px;
+    padding: 0 16px;
+  }
+
+  .top-nav {
+    height: 58px;
+    justify-content: center;
+    padding: 0 16px;
+  }
+
+  .brand-name {
+    font-size: 1.35rem;
+  }
+
+  .app-shell {
+    gap: 18px;
+    padding: 78px 14px 150px;
+  }
+
+  .hero-section {
+    text-align: left;
+  }
+
+  .hero-section h1 {
+    font-size: 2rem;
+    line-height: 1.12;
+  }
+
+  .hero-section p {
+    font-size: 0.98rem;
+    line-height: 1.5;
+    margin-top: 10px;
+  }
+
+  .upload-card,
+  .compose-panel,
+  .summary-panel,
+  .focus-panel,
+  .live-preview-panel {
+    border-radius: 18px;
+    padding: 16px;
+  }
+
+  .drop-zone {
+    border-radius: 16px;
+    min-height: 0;
+    padding: 28px 16px;
+  }
+
+  .drop-zone h2 {
+    font-size: 1.15rem;
+  }
+
+  .drop-zone p {
+    font-size: 0.92rem;
+    line-height: 1.4;
+  }
+
+  .upload-icon {
+    height: 46px;
+    width: 46px;
+  }
+
+  .upload-actions,
+  .button-row,
+  .result-links {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .config-grid,
+  .preview-layout {
+    gap: 18px;
+  }
+
+  .compose-header,
+  .panel-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .compose-header svg {
+    display: none;
+  }
+
+  .section-kicker,
+  .field-label,
+  .compose-header h2,
+  .panel-header h2 {
+    font-size: 0.76rem;
+  }
+
+  .segmented-control.two {
+    grid-template-columns: 1fr;
+  }
+
+  .segmented-control.ten {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .segmented-control button {
+    min-height: 42px;
+  }
+
+  .advanced-grid {
+    gap: 14px;
+    grid-template-columns: 1fr;
+  }
+
+  .field-help {
+    grid-column: auto;
+  }
+
+  .summary-panel {
+    gap: 18px;
+  }
+
+  .summary-list {
+    gap: 12px;
+  }
+
+  .summary-row {
+    align-items: flex-start;
+    display: grid;
+    gap: 4px;
+  }
+
+  .summary-row strong {
+    max-width: 100%;
+  }
+
+  .focus-panel {
+    order: 1;
+  }
+
+  .live-preview-panel {
+    order: 2;
+  }
+
+  .focus-preview-wrap {
+    min-height: 260px;
+    padding: 16px;
+  }
+
+  .focus-preview {
+    width: min(100%, 360px) !important;
+  }
+
+  .page-preview-grid {
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: 420px;
+    padding-right: 0;
+  }
+
+  .page-preview-card {
+    border-radius: 14px;
+    padding: 8px;
+  }
+
+  .preview-page-number {
+    font-size: 0.72rem;
+  }
+
+  .page-count-pill {
+    font-size: 0.72rem;
+  }
+
+  .floating-action-bar {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    max-width: none;
+    padding: 0 12px;
+  }
+
+  .action-pill {
+    border-radius: 20px;
+    display: grid;
+    grid-template-columns: 1fr;
+    padding: 8px;
+  }
+
+  .action-pill button {
+    width: 100%;
+  }
+
+  .app-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+    padding: 18px 16px 138px;
+  }
+
+  .busy-backdrop,
+  .modal-backdrop {
+    padding: 14px;
+  }
+
+  .busy-card,
+  .modal {
+    border-radius: 18px;
+    padding: 18px;
+  }
+
+  .modal-header {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .app-shell {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .hero-section h1 {
+    font-size: 1.72rem;
+  }
+
+  .hero-section p {
+    font-size: 0.93rem;
+  }
+
+  .upload-card,
+  .compose-panel,
+  .summary-panel,
+  .focus-panel,
+  .live-preview-panel {
+    padding: 12px;
+  }
+
+  .drop-zone {
+    padding: 24px 12px;
+  }
+
+  .control-field select,
+  .control-field input[type="text"] {
+    min-height: 46px;
+  }
+
+  .page-preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .focus-preview-wrap {
+    min-height: 220px;
+    padding: 12px;
+  }
+
+  .focus-preview {
+    width: 100% !important;
+  }
+}

@@ -84,21 +84,35 @@ function canvasToBlob(canvas, type, quality) {
 export async function buildPdf(items, onProgress, options) {
   const pdf = await PDFDocument.create();
   const pages = groupPdfPages(items, options.imagesPerPage);
+  const totalSteps = items.length + pages.length + 1;
+  let completedSteps = 0;
+
+  function reportProgress(message, current = completedSteps) {
+    onProgress({
+      current: Math.min(current, totalSteps),
+      message,
+      total: totalSteps,
+    });
+  }
 
   for (const [pageIndex, pageItems] of pages.entries()) {
-    onProgress(copy.status.processingPage(pageIndex + 1, pages.length));
     const embeddedImages = [];
     for (const [imageIndex, item] of pageItems.entries()) {
-      if (options.optimizeImages) {
-        onProgress(copy.status.optimizingImage(pageIndex * options.imagesPerPage + imageIndex + 1, items.length));
-      }
+      const imageNumber = pageIndex * options.imagesPerPage + imageIndex + 1;
+      const message = options.optimizeImages
+        ? copy.status.optimizingImage(imageNumber, items.length)
+        : copy.status.processingImage(imageNumber, items.length);
+      reportProgress(message, completedSteps + 1);
       embeddedImages.push(await embedImageFromFile(pdf, item.file, options));
+      completedSteps += 1;
     }
 
+    reportProgress(copy.status.processingPage(pageIndex + 1, pages.length), completedSteps + 1);
     if (options.layoutMode === 'exact' && embeddedImages.length === 1) {
       const [{ image, width, height }] = embeddedImages;
       const page = pdf.addPage([width, height]);
       page.drawImage(image, { x: 0, y: 0, width, height });
+      completedSteps += 1;
       continue;
     }
 
@@ -114,6 +128,7 @@ export async function buildPdf(items, onProgress, options) {
       embeddedImages.forEach((entry, index) => {
         page.drawImage(entry.image, fitInto(entry, slots[index]));
       });
+      completedSteps += 1;
       continue;
     }
 
@@ -124,8 +139,9 @@ export async function buildPdf(items, onProgress, options) {
     embeddedImages.forEach((entry, index) => {
       page.drawImage(entry.image, fitInto(entry, slots[index]));
     });
+    completedSteps += 1;
   }
 
-  onProgress(copy.status.finishing);
+  reportProgress(copy.status.finishing, totalSteps);
   return pdf.save();
 }

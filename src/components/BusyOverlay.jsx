@@ -2,8 +2,9 @@ import React from 'react';
 import { Loader2 } from 'lucide-react';
 import { copy } from '../lib/copy.js';
 
-export function BusyOverlay({ isOpen, message }) {
+export function BusyOverlay({ isOpen, message, progress }) {
   if (!isOpen) return null;
+  const percentage = progress ? Math.round((progress.current / progress.total) * 100) : null;
 
   return (
     <div className="busy-backdrop" role="status" aria-live="polite" aria-busy="true">
@@ -11,6 +12,24 @@ export function BusyOverlay({ isOpen, message }) {
         <Loader2 className="spin" size={34} />
         <strong>{copy.loading.title}</strong>
         <span>{message || copy.loading.message}</span>
+        {progress && (
+          <div
+            className="progress-wrap"
+            aria-label={message}
+            aria-valuemax={progress.total}
+            aria-valuemin="0"
+            aria-valuenow={progress.current}
+            role="progressbar"
+          >
+            <div className="progress-meta">
+              <span>{copy.loading.localProgress}</span>
+              <span>{percentage}%</span>
+            </div>
+            <div className="progress-track">
+              <div className="progress-fill" style={{ width: `${percentage}%` }} />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

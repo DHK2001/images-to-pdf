@@ -50,6 +50,7 @@ export const copy = {
   loading: {
     title: 'Working on your PDF',
     message: 'Please wait until the current process finishes.',
+    localProgress: 'Local progress',
   },
   actions: {
     generate: 'Generate PDF',
@@ -82,6 +83,7 @@ export const copy = {
     loaded: (count, ignoredText = '') => `${count} images loaded${ignoredText}`,
     loadedArchive: (count, ignoredText = '') => `${count} images loaded from archive${ignoredText}`,
     ignoredFiles: (count) => ` (${count} files ignored)`,
+    processingImage: (current, total) => `Processing image ${current} of ${total}`,
     processingPage: (page, total) => `Processing page ${page} of ${total}`,
     optimizingImage: (current, total) => `Optimizing image ${current} of ${total}`,
     finishing: 'Finalizing PDF',

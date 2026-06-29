@@ -1,23 +1,22 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Download, Eye, FileText, Loader2, RefreshCw, X } from 'lucide-react';
+import { FileText, Loader2, RefreshCw, X } from 'lucide-react';
 import { BusyOverlay } from './components/BusyOverlay.jsx';
 import { CompositionPanel } from './components/CompositionPanel.jsx';
 import { PageListPreview, SelectedPagePanel } from './components/PreviewPanels.jsx';
 import { SuccessModal } from './components/SuccessModal.jsx';
 import { SummaryPanel } from './components/SummaryPanel.jsx';
 import { UploadPanel } from './components/UploadPanel.jsx';
-import { DEFAULT_OPTIONS, SUPPORTED_LABEL } from './lib/constants.js';
+import { useCompositionOptions } from './hooks/useCompositionOptions.js';
+import { SUPPORTED_LABEL } from './lib/constants.js';
 import { copy } from './lib/copy.js';
 import {
   cleanPdfName,
-  filesFromArchive,
-  isSupportedArchive,
   folderNameFromItems,
   revokeImageItems,
-  splitImageItems,
 } from './lib/fileUtils.js';
-import { groupPdfPages, pageDimensions } from './lib/layout.js';
+import { groupPdfPages } from './lib/layout.js';
 import { buildPdf } from './lib/pdf.js';
+import { archiveFromFiles, loadArchiveSource, loadImageSource } from './lib/sourceLoaders.js';
 
 export function App() {
   const imageInputRef = useRef(null);
@@ -32,29 +31,16 @@ export function App() {
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [isBusy, setIsBusy] = useState(false);
+  const [progress, setProgress] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [imagesPerPage, setImagesPerPage] = useState(DEFAULT_OPTIONS.imagesPerPage);
   const [dragPageIndex, setDragPageIndex] = useState(null);
-  const [layoutMode, setLayoutMode] = useState(DEFAULT_OPTIONS.layoutMode);
-  const [pagePreset, setPagePreset] = useState(DEFAULT_OPTIONS.pagePreset);
-  const [orientation, setOrientation] = useState(DEFAULT_OPTIONS.orientation);
-  const [margin, setMargin] = useState(DEFAULT_OPTIONS.margin);
-  const [gap, setGap] = useState(DEFAULT_OPTIONS.gap);
-  const [gridColumns, setGridColumns] = useState(DEFAULT_OPTIONS.gridColumns);
-  const [gridRows, setGridRows] = useState(DEFAULT_OPTIONS.gridRows);
-  const [optimizeImages, setOptimizeImages] = useState(DEFAULT_OPTIONS.optimizeImages);
-  const [imageQuality, setImageQuality] = useState(DEFAULT_OPTIONS.imageQuality);
-  const [maxImageDimension, setMaxImageDimension] = useState(DEFAULT_OPTIONS.maxImageDimension);
   const [selectedPageIndex, setSelectedPageIndex] = useState(0);
+  const { options, updateOption, imageGrid, pageGap, pageMargin, previewPaper } = useCompositionOptions();
 
   const totalSize = useMemo(() => images.reduce((sum, item) => sum + item.file.size, 0), [images]);
-  const pagePlan = useMemo(() => groupPdfPages(images, imagesPerPage), [images, imagesPerPage]);
+  const pagePlan = useMemo(() => groupPdfPages(images, options.imagesPerPage), [images, options.imagesPerPage]);
   const activePageIndex = pagePlan.length ? Math.min(selectedPageIndex, pagePlan.length - 1) : 0;
   const activePageItems = pagePlan[activePageIndex] || [];
-  const previewPaper = pageDimensions(pagePreset, orientation);
-  const pageMargin = layoutMode === 'paper' ? margin : 0;
-  const pageGap = layoutMode === 'paper' ? gap : 0;
-  const imageGrid = { cols: gridColumns, rows: gridRows };
 
   function revokePdf() {
     if (pdfUrl) URL.revokeObjectURL(pdfUrl);
@@ -84,20 +70,28 @@ export function App() {
     setStatus(nextStatus || copy.status.loaded(nextImages.length, ignoredText));
   }
 
+  async function loadSource(statusMessage, loader) {
+    setIsBusy(true);
+    setProgress(null);
+    setError('');
+    setStatus(statusMessage);
+    try {
+      const result = await loader();
+      applyImages(result.images, result.ignored, result.sourceName, result.status);
+    } catch (sourceError) {
+      setError(sourceError.message || copy.errors.archiveRead);
+      setStatus('');
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
   async function handleImageChange(event) {
     const files = Array.from(event.target.files);
     event.target.value = '';
     if (!files.length) return;
 
-    setIsBusy(true);
-    setError('');
-    setStatus(copy.status.readingImages);
-    try {
-      const result = await splitImageItems(files);
-      applyImages(result.images, result.ignored, copy.output.placeholder);
-    } finally {
-      setIsBusy(false);
-    }
+    await loadSource(copy.status.readingImages, () => loadImageSource(files));
   }
 
   async function handleFolderChange(event) {
@@ -105,15 +99,7 @@ export function App() {
     event.target.value = '';
     if (!files.length) return;
 
-    setIsBusy(true);
-    setError('');
-    setStatus(copy.status.readingFolder);
-    try {
-      const result = await splitImageItems(files);
-      applyImages(result.images, result.ignored, '');
-    } finally {
-      setIsBusy(false);
-    }
+    await loadSource(copy.status.readingFolder, () => loadImageSource(files, ''));
   }
 
   async function handleArchiveChange(event) {
@@ -121,53 +107,20 @@ export function App() {
     event.target.value = '';
     if (!file) return;
 
-    setIsBusy(true);
-    setError('');
-    setStatus(copy.status.readingArchive);
-    try {
-      const result = await filesFromArchive(file);
-      const ignoredText = result.ignored ? copy.status.ignoredFiles(result.ignored) : '';
-      applyImages(result.images, result.ignored, result.sourceName, copy.status.loadedArchive(result.images.length, ignoredText));
-    } catch (archiveError) {
-      setError(archiveError.message || copy.errors.archiveRead);
-      setStatus('');
-    } finally {
-      setIsBusy(false);
-    }
+    await loadSource(copy.status.readingArchive, () => loadArchiveSource(file));
   }
 
   async function handleDrop(event) {
     event.preventDefault();
     const files = Array.from(event.dataTransfer.files);
-    const archive = files.find((file) => isSupportedArchive(file.name));
+    const archive = archiveFromFiles(files);
     if (archive) {
-      setIsBusy(true);
-      setError('');
-      setStatus(copy.status.readingArchive);
-      try {
-        const result = await filesFromArchive(archive);
-        const ignoredText = result.ignored ? copy.status.ignoredFiles(result.ignored) : '';
-        applyImages(result.images, result.ignored, result.sourceName, copy.status.loadedArchive(result.images.length, ignoredText));
-      } catch (archiveError) {
-        setError(archiveError.message || copy.errors.archiveRead);
-        setStatus('');
-      } finally {
-        setIsBusy(false);
-      }
+      await loadSource(copy.status.readingArchive, () => loadArchiveSource(archive));
       return;
     }
 
     if (!files.length) return;
-
-    setIsBusy(true);
-    setError('');
-    setStatus(copy.status.readingImages);
-    try {
-      const result = await splitImageItems(files);
-      applyImages(result.images, result.ignored, copy.output.placeholder);
-    } finally {
-      setIsBusy(false);
-    }
+    await loadSource(copy.status.readingImages, () => loadImageSource(files));
   }
 
   async function handleGeneratePdf() {
@@ -177,21 +130,23 @@ export function App() {
     }
 
     setIsBusy(true);
+    setProgress({
+      current: 0,
+      message: copy.loading.message,
+      total: images.length + pagePlan.length + 1,
+    });
     setError('');
     revokePdf();
 
     try {
-      const bytes = await buildPdf(images, setStatus, {
-        imagesPerPage,
-        layoutMode,
-        pagePreset,
-        orientation,
+      const bytes = await buildPdf(images, (nextProgress) => {
+        setStatus(nextProgress.message);
+        setProgress(nextProgress);
+      }, {
+        ...options,
         margin: pageMargin,
         gap: pageGap,
         imageGrid,
-        optimizeImages,
-        imageQuality,
-        maxImageDimension,
       });
       const blob = new Blob([bytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
@@ -205,6 +160,7 @@ export function App() {
       setStatus('');
     } finally {
       setIsBusy(false);
+      setProgress(null);
     }
   }
 
@@ -222,12 +178,17 @@ export function App() {
 
   function movePage(fromIndex, toIndex) {
     if (fromIndex === null || toIndex === null || fromIndex === toIndex) return;
-    const pages = groupPdfPages(images, imagesPerPage);
+    const pages = groupPdfPages(images, options.imagesPerPage);
     const [moved] = pages.splice(fromIndex, 1);
     pages.splice(toIndex, 0, moved);
     setImages(pages.flat());
     setSelectedPageIndex(toIndex);
     setDragPageIndex(null);
+  }
+
+  function updateImagesPerPage(count) {
+    updateOption('imagesPerPage', count);
+    setSelectedPageIndex(0);
   }
 
   return (
@@ -256,31 +217,9 @@ export function App() {
           <CompositionPanel
             pageCount={pagePlan.length}
             hasImages={images.length > 0}
-            imagesPerPage={imagesPerPage}
-            layoutMode={layoutMode}
-            pagePreset={pagePreset}
-            orientation={orientation}
-            margin={margin}
-            gap={gap}
-            gridColumns={gridColumns}
-            gridRows={gridRows}
-            optimizeImages={optimizeImages}
-            imageQuality={imageQuality}
-            maxImageDimension={maxImageDimension}
-            onImagesPerPageChange={(count) => {
-              setImagesPerPage(count);
-              setSelectedPageIndex(0);
-            }}
-            onLayoutModeChange={setLayoutMode}
-            onPagePresetChange={setPagePreset}
-            onOrientationChange={setOrientation}
-            onMarginChange={setMargin}
-            onGapChange={setGap}
-            onGridColumnsChange={setGridColumns}
-            onGridRowsChange={setGridRows}
-            onOptimizeImagesChange={setOptimizeImages}
-            onImageQualityChange={setImageQuality}
-            onMaxImageDimensionChange={setMaxImageDimension}
+            options={options}
+            onOptionChange={updateOption}
+            onImagesPerPageChange={updateImagesPerPage}
           />
 
           <SummaryPanel
@@ -302,7 +241,7 @@ export function App() {
           <SelectedPagePanel
             activePageIndex={activePageIndex}
             activePageItems={activePageItems}
-            layoutMode={layoutMode}
+            layoutMode={options.layoutMode}
             pageSize={previewPaper}
             margin={pageMargin}
             gap={pageGap}
@@ -313,7 +252,7 @@ export function App() {
           <PageListPreview
             pagePlan={pagePlan}
             activePageIndex={activePageIndex}
-            layoutMode={layoutMode}
+            layoutMode={options.layoutMode}
             pageSize={previewPaper}
             margin={pageMargin}
             gap={pageGap}
@@ -356,7 +295,7 @@ export function App() {
         <span>{copy.footer}</span>
       </footer>
 
-      <BusyOverlay isOpen={isBusy} message={status} />
+      <BusyOverlay isOpen={isBusy} message={status} progress={progress} />
 
       <SuccessModal
         isOpen={showSuccessModal}

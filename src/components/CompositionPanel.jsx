@@ -6,29 +6,24 @@ import { copy } from '../lib/copy.js';
 export function CompositionPanel({
   pageCount,
   hasImages,
-  imagesPerPage,
-  layoutMode,
-  pagePreset,
-  orientation,
-  margin,
-  gap,
-  gridColumns,
-  gridRows,
-  optimizeImages,
-  imageQuality,
-  maxImageDimension,
+  options,
+  onOptionChange,
   onImagesPerPageChange,
-  onLayoutModeChange,
-  onPagePresetChange,
-  onOrientationChange,
-  onMarginChange,
-  onGapChange,
-  onGridColumnsChange,
-  onGridRowsChange,
-  onOptimizeImagesChange,
-  onImageQualityChange,
-  onMaxImageDimensionChange,
 }) {
+  const {
+    imagesPerPage,
+    layoutMode,
+    pagePreset,
+    orientation,
+    margin,
+    gap,
+    gridColumns,
+    gridRows,
+    optimizeImages,
+    imageQuality,
+    maxImageDimension,
+  } = options;
+
   return (
     <div className="compose-panel">
       <div className="compose-header">
@@ -41,10 +36,10 @@ export function CompositionPanel({
 
       <label className="field-label">{copy.composition.format}</label>
       <div className="segmented-control two" role="group" aria-label={copy.composition.format}>
-        <button type="button" className={layoutMode === 'exact' ? 'selected' : ''} onClick={() => onLayoutModeChange('exact')}>
+        <button type="button" className={layoutMode === 'exact' ? 'selected' : ''} onClick={() => onOptionChange('layoutMode', 'exact')}>
           {copy.composition.exact}
         </button>
-        <button type="button" className={layoutMode === 'paper' ? 'selected' : ''} onClick={() => onLayoutModeChange('paper')}>
+        <button type="button" className={layoutMode === 'paper' ? 'selected' : ''} onClick={() => onOptionChange('layoutMode', 'paper')}>
           {copy.composition.paper}
         </button>
       </div>
@@ -67,7 +62,7 @@ export function CompositionPanel({
       <div className="advanced-grid">
           <label className="control-field">
             <span>{copy.composition.columns}</span>
-            <select value={gridColumns} onChange={(event) => onGridColumnsChange(Number(event.target.value))}>
+            <select value={gridColumns} onChange={(event) => onOptionChange('gridColumns', Number(event.target.value))}>
               <option value="0">{copy.composition.auto}</option>
               {Array.from({ length: 10 }, (_, index) => index + 1).map((count) => (
                 <option value={count} key={count}>
@@ -79,7 +74,7 @@ export function CompositionPanel({
 
           <label className="control-field">
             <span>{copy.composition.rows}</span>
-            <select value={gridRows} onChange={(event) => onGridRowsChange(Number(event.target.value))}>
+            <select value={gridRows} onChange={(event) => onOptionChange('gridRows', Number(event.target.value))}>
               <option value="0">{copy.composition.auto}</option>
               {Array.from({ length: 10 }, (_, index) => index + 1).map((count) => (
                 <option value={count} key={count}>
@@ -97,12 +92,12 @@ export function CompositionPanel({
       <div className="advanced-grid">
         <label className="control-field checkbox-field">
           <span>{copy.composition.optimizeImages}</span>
-          <input type="checkbox" checked={optimizeImages} onChange={(event) => onOptimizeImagesChange(event.target.checked)} />
+          <input type="checkbox" checked={optimizeImages} onChange={(event) => onOptionChange('optimizeImages', event.target.checked)} />
         </label>
 
         <label className="control-field">
           <span>{copy.composition.maxDimension}</span>
-          <select value={maxImageDimension} disabled={!optimizeImages} onChange={(event) => onMaxImageDimensionChange(Number(event.target.value))}>
+          <select value={maxImageDimension} disabled={!optimizeImages} onChange={(event) => onOptionChange('maxImageDimension', Number(event.target.value))}>
             <option value="0">{copy.composition.originalSize}</option>
             {[1200, 1800, 2400, 3200].map((value) => (
               <option value={value} key={value}>
@@ -121,7 +116,7 @@ export function CompositionPanel({
             step="0.05"
             value={imageQuality}
             disabled={!optimizeImages}
-            onChange={(event) => onImageQualityChange(Number(event.target.value))}
+            onChange={(event) => onOptionChange('imageQuality', Number(event.target.value))}
           />
         </label>
 
@@ -132,7 +127,7 @@ export function CompositionPanel({
         <div className="advanced-grid">
           <label className="control-field">
             <span>{copy.composition.pageSize}</span>
-            <select value={pagePreset} onChange={(event) => onPagePresetChange(event.target.value)}>
+            <select value={pagePreset} onChange={(event) => onOptionChange('pagePreset', event.target.value)}>
               {Object.entries(PAGE_SIZES).map(([value, page]) => (
                 <option value={value} key={value}>
                   {page.label}
@@ -143,7 +138,7 @@ export function CompositionPanel({
 
           <label className="control-field">
             <span>{copy.composition.orientation}</span>
-            <select value={orientation} onChange={(event) => onOrientationChange(event.target.value)}>
+            <select value={orientation} onChange={(event) => onOptionChange('orientation', event.target.value)}>
               <option value="portrait">{copy.composition.portrait}</option>
               <option value="landscape">{copy.composition.landscape}</option>
             </select>
@@ -151,12 +146,12 @@ export function CompositionPanel({
 
           <label className="control-field">
             <span>{copy.composition.margin(margin)}</span>
-            <input type="range" min="0" max="96" step="6" value={margin} onChange={(event) => onMarginChange(Number(event.target.value))} />
+            <input type="range" min="0" max="96" step="6" value={margin} onChange={(event) => onOptionChange('margin', Number(event.target.value))} />
           </label>
 
           <label className="control-field">
             <span>{copy.composition.gap(gap)}</span>
-            <input type="range" min="0" max="72" step="6" value={gap} onChange={(event) => onGapChange(Number(event.target.value))} />
+            <input type="range" min="0" max="72" step="6" value={gap} onChange={(event) => onOptionChange('gap', Number(event.target.value))} />
           </label>
         </div>
       )}
